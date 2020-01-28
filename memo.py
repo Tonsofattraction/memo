@@ -3,6 +3,9 @@ import argparse
 import os
 import subprocess
 import yaml
+from random import choice
+from string import ascii_uppercase, ascii_lowercase
+
 
 WORKSPACE = f'{os.getenv("HOME")}/.memo/'
 CONFIG_FILE = WORKSPACE + '.config'
@@ -18,19 +21,25 @@ def parse_options():
     """ parse command line options """
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        'name',
+        help='name of a new or an existing memo',
+        default='',
+        action='store',
+    )
+    parser.add_argument(
+        '-n',
+        '--new',
+        dest='new',
+        help='make a new memo with this name',
+        default=False,
+        action='store_true',
+    )
+    parser.add_argument(
         '--config',
         dest='show_config',
         help='show_config',
         default=False,
         action='store_true',
-    )
-    parser.add_argument(
-        '-n',
-        '--new',
-        dest='new_name',
-        help='create new memo',
-        default=False,
-        action='store',
     )
     parser.add_argument(
         '-l',
@@ -40,6 +49,7 @@ def parse_options():
         default=False,
         action='store_true',
     )
+
     return parser.parse_args()
 
 
@@ -47,6 +57,10 @@ def list_memos(*, offset=0, limit=15):
     for f in os.listdir(WORKSPACE):
         if not f.startswith('.'):
             print(f)
+
+
+def _generate_suffix():
+    return '_' + ''.join(choice(ascii_uppercase+ascii_lowercase) for i in range(7))
 
 
 class Memo:
@@ -89,12 +103,19 @@ def main():
     memo = Memo()
     if options.list:
         list_memos()
-    elif options.new_name:
-        # if exists, open or create new with suffix?
-        new_file_path = WORKSPACE + options.new_name
-        with open(new_file_path, 'w'):
-            pass
-        subprocess.call([memo.config['editor'], new_file_path])
+    elif options.name:
+        file_path = WORKSPACE + options.name
+        if options.new:
+            # create new but save an old one with a suffix
+            if os.path.exists(file_path):
+                suffix = _generate_suffix()
+                while os.path.exists(file_path+suffix):
+                    suffix = _generate_suffix()
+                with open(file_path, 'r') as old_file, open(file_path+suffix, 'w') as new_file:
+                    new_file.write(old_file.read())
+                with open(file_path, 'w'):
+                    pass
+        subprocess.call([memo.config['editor'], file_path])
     elif options.show_config:
         with open(CONFIG_FILE) as f:
             for l in f.readlines():

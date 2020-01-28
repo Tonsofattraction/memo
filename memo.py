@@ -55,11 +55,12 @@ class Memo:
             os.mkdir(WORKSPACE)
             with open(CONFIG_FILE, 'w'):
                 pass
-            self.__setup_editor()
             with open(STATE_FILE, 'w'):
                 pass
             with open(LOG_FILE, 'w'):
                 pass
+        if 'editor' not in self.config:
+            self.__setup_editor()
 
     def __setup_editor(self):
         for e in EDITORS:
@@ -69,16 +70,15 @@ class Memo:
                 break
 
     def __update_config(self, key, value):
-        self.config[key] = value
         with open(CONFIG_FILE, 'w') as f:
-            f.write(yaml.safe_dump(self.config))
+            f.write(yaml.safe_dump(dict([*self.config.items(), (key, value)])))
 
     @property
     def config(self):
         with open(CONFIG_FILE) as f:
             try:
                 return yaml.safe_load(f.read()) or {}
-            except:
+            except yaml.scanner.ScannerError:
                 raise RuntimeError('config file is corrupted')
 
 

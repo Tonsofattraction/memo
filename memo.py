@@ -22,6 +22,7 @@ def parse_options():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'name',
+        nargs='?',
         help='name of a new or an existing memo',
         default='',
         action='store',
@@ -60,7 +61,7 @@ def list_memos(*, offset=0, limit=15):
 
 
 def _generate_suffix():
-    return '_' + ''.join(choice(ascii_uppercase+ascii_lowercase) for i in range(7))
+    return '_' + ''.join(choice(ascii_uppercase+ascii_lowercase) for _ in range(7))
 
 
 class Memo:
